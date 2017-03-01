@@ -21,6 +21,7 @@ namespace WindowsFormsApplication1
         public Form1()
         {
             InitializeComponent();
+            th.Start();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -28,15 +29,21 @@ namespace WindowsFormsApplication1
             
         }
 
+      
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            base.OnFormClosed(e);
+            Server.cmd = "stop";
+        }
         private void button1_Click(object sender, EventArgs e)
         {
             
-            th.Start();
+            
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            Server.cmd = "stop";
+           
         }
     }
 }
