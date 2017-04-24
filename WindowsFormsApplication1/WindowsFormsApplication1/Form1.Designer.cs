@@ -57,7 +57,7 @@
             // 
             this.groupBox1.Location = new System.Drawing.Point(14, 20);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(317, 441);
+            this.groupBox1.Size = new System.Drawing.Size(359, 441);
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "groupBox1";
@@ -74,7 +74,6 @@
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
-            
 
         }
 

@@ -12,8 +12,14 @@ using System.IO;
 
 namespace WindowsFormsApplication1
 {
+    public delegate void cleintConnected(object source, ServerEvent e);
+    public class ServerEvent: EventArgs
+    {
+
+    }
     class Server
     {
+        
         public static String cmd = "läuft";
         static System.Net.IPAddress ip = System.Net.IPAddress.Parse("127.0.0.1");
         private static TcpListener listener = null;
@@ -35,7 +41,7 @@ namespace WindowsFormsApplication1
             {
                // cmd = Console.ReadLine();
                 //if (!cmd.ToLower().Equals("stop"))
-                Console.WriteLine("Unbekannter Befehl: " + cmd);
+               // Console.WriteLine("Unbekannter Befehl: " + cmd);
             }
        
             // Alle Server-Threads stoppen
@@ -64,20 +70,23 @@ namespace WindowsFormsApplication1
             th.Abort();
         }
 
-        
+       
 
         // Hauptthread des Servers
         // Nimmt die Verbindungswünsche von Clients entgegen
         // und startet die Server-Threads für die Clients
         public static void Run()
         {
+            int i = 0;
             while (true)
             {
                 // Wartet auf eingehenden Verbindungswunsch
                 TcpClient c = listener.AcceptTcpClient();
+                i++;
+                
                 // Initialisiert und startet einen Server-Thread
                 // und fügt ihn zur Liste der Server-Threads hinzu
-                threads.Add(new ServerThread(c));
+                threads.Add(new ServerThread(c,i));
             }
         }
 
@@ -89,14 +98,18 @@ namespace WindowsFormsApplication1
         public bool stop = false;
         // Flag für "Thread läuft"
         public bool running = false;
+        private int index;
+        private String name = "TEst";
+
         // Die Verbindung zum Client
         private TcpClient connection = null;
         // Speichert die Verbindung zum Client und startet den Thread
-        public ServerThread(TcpClient connection)
+        public ServerThread(TcpClient connection, int index)
         {
             // Speichert die Verbindung zu Client,
             // um sie später schließen zu können
             this.connection = connection;
+            this.index = index;
             // Initialisiert und startet den Thread
             new Thread(new ThreadStart(Run)).Start();
         }
@@ -107,27 +120,51 @@ namespace WindowsFormsApplication1
             this.running = true;
             // Hole den Stream für's schreiben
             Stream outStream = this.connection.GetStream();
-            String buf = null;
+            String buf = String.Empty;
+            
             bool loop = true;
             while (loop)
             {
                 try
                 {
-                    // Hole die aktuelle Zeit als String
-                    String time = DateTime.Now.ToString();
-                    // Sende Zeit nur wenn sie sich von der vorherigen unterscheidet
-                    if (!time.Equals(buf))
+                    byte[] rec = new byte[1024];
+                    outStream.Read(rec, 0, 1024);
+                   // string incoming = Encoding.Unicode.GetString(rec);
+                    if (rec.Length > 0)
                     {
-                        // Wandele den Zeitstring in ein Byte-Array um
-                        // Es wird noch ein Carriage-Return-Linefeed angefügt
-                        // so daß das Lesen auf Client-Seite einfacher wird
-                        Byte[] sendBytes = Encoding.ASCII.GetBytes(time + "\r\n");
-                        // Sende die Bytes zum Client
-                        outStream.Write(sendBytes, 0, sendBytes.Length);
-                        // Merke die Zeit
-                        buf = time;
+
+                        //Console.WriteLine(rec);
+                        try
+                        {
+                            foreach (byte b in rec)
+                            {
+                                if(b != 0)
+                                {
+                                    Console.Write(Convert.ToChar(b));
+                                }
+                            }
+                            Console.Write("\n");
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e.Message);
+                        }
                     }
-                    // Wiederhole die Schleife so lange bis von außen der Stopwunsch kommt
+                    //// Hole die aktuelle Zeit als String
+                    //String time = DateTime.Now.ToString();
+                    //// Sende Zeit nur wenn sie sich von der vorherigen unterscheidet
+                    //if (!time.Equals(buf))
+                    //{
+                    //    // Wandele den Zeitstring in ein Byte-Array um
+                    //    // Es wird noch ein Carriage-Return-Linefeed angefügt
+                    //    // so daß das Lesen auf Client-Seite einfacher wird
+                    //    Byte[] sendBytes = Encoding.ASCII.GetBytes("client "+index+" "+time + "\r\n");
+                    //    // Sende die Bytes zum Client
+                    //    outStream.Write(sendBytes, 0, sendBytes.Length);
+                    //    // Merke die Zeit
+                    //    buf = time;
+                    //}
+                    //// Wiederhole die Schleife so lange bis von außen der Stopwunsch kommt
                     loop = !this.stop;
                 }
                 catch (Exception)
@@ -141,5 +178,12 @@ namespace WindowsFormsApplication1
             // Setze das Flag "Thread läuft" zurück
             this.running = false;
         }
+
+        private void printToConsole(byte[] input)
+        {
+            Console.WriteLine(Encoding.ASCII.GetString(input));
+        }
     }
+
+   
 }
