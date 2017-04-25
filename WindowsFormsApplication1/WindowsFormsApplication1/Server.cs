@@ -12,10 +12,26 @@ using System.IO;
 
 namespace WindowsFormsApplication1
 {
-    public delegate void cleintConnected(object source, ServerEvent e);
+    public delegate void clientConnected(object source, ServerEvent e);
     public class ServerEvent: EventArgs
     {
+        String name;
+        int index;
+        int hp;
+        int ammo;
 
+        public ServerEvent(String name, int index, int hp, int ammo)
+        {
+            this.name = name;
+            this.hp = hp;
+            this.index = index;
+            this.ammo = ammo;
+        }
+
+        public Dictionary<string, int> getArgs()
+        {
+            return new Dictionary<string, int> { { "Index", index}, { "HP", hp }, { "Ammo", ammo } };
+        }
     }
     class Server
     {
@@ -94,6 +110,8 @@ namespace WindowsFormsApplication1
 
     class ServerThread
     {
+        public static  event clientConnected cleintConnected;
+        private int hp = 100;
         // Stop-Flag
         public bool stop = false;
         // Flag für "Thread läuft"
@@ -121,7 +139,7 @@ namespace WindowsFormsApplication1
             // Hole den Stream für's schreiben
             Stream outStream = this.connection.GetStream();
             String buf = String.Empty;
-            
+            cleintConnected(this, new ServerEvent(name, index, hp, 200));
             bool loop = true;
             while (loop)
             {
@@ -140,10 +158,11 @@ namespace WindowsFormsApplication1
                             {
                                 if(b != 0)
                                 {
-                                    Console.Write(Convert.ToChar(b));
+                                    buf += (Convert.ToChar(b));
                                 }
                             }
-                            Console.Write("\n");
+                            interpreteMessage(buf);
+                            buf = String.Empty;
                         }
                         catch (Exception e)
                         {
@@ -172,17 +191,26 @@ namespace WindowsFormsApplication1
                     // oder bis ein Fehler aufgetreten ist
                     loop = false;
                 }
+
+
             }
             // Schließe die Verbindung zum Client
             this.connection.Close();
             // Setze das Flag "Thread läuft" zurück
             this.running = false;
+
+
         }
 
-        private void printToConsole(byte[] input)
+        private void interpreteMessage(string message)
         {
-            Console.WriteLine(Encoding.ASCII.GetString(input));
+            if (message == "hit")
+            {
+                hp -= 20;
+                cleintConnected(this, new ServerEvent("test", index, hp, 200));
+            }
         }
+
     }
 
    
